@@ -54,6 +54,10 @@ const SideBar = () => {
     navigate('/medicine', { state: { doctorId } });
   };
 
+  const handleNavigateToAddPrescription = () => {
+    navigate('/prescription', { state: { doctorId } });
+  };
+
   return (
     <div className="sidebar">
       <div className="logo-container">
@@ -88,11 +92,14 @@ const SideBar = () => {
             <FaCalendarAlt className="icon" /> Doctor Schedule
           </div>
         </li>
-        <li>
-          <Link to="/prescription" className={location.pathname === '/prescription' ? 'active' : ''}>
+        <div
+            onClick={handleNavigateToAddPrescription}
+            className={location.pathname === '/prescription' ? 'active' : ''}
+            style={{ cursor: 'pointer' }}
+          >
             <FaFileAlt className="icon" /> Prescription
-          </Link>
-        </li>
+          </div>
+        
         <li>
           <div
             onClick={handleNavigateToAppointment}

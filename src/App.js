@@ -18,6 +18,7 @@ import Prescription from './pages/Prescription';
 import Signup from './pages/Signup';
 import AddMedicine from './pages/AddMedicine'; // Import AddMedicine component
 import Patientinfo from './pages/info';
+import PrescriptionSummary from './pages/Summary';
 
 function AppContent() {
     const location = useLocation();
@@ -47,6 +48,7 @@ function AppContent() {
                         <Route path="/logout" element={<Logout />} />
                         <Route path="/" element={<Navigate to="/login" />} />
                         <Route path="/info" element={<Patientinfo />} />
+                        <Route path="/summary" element={<PrescriptionSummary />} />
 
                     </Routes>
                 </div>

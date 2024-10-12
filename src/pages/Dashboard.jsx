@@ -1,4 +1,3 @@
-// Dashboard.js
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom'; // Import useLocation hook
 import './Dashboard.css';
@@ -17,8 +16,8 @@ const Dashboard = () => {
       if (!doctorId) return;
 
       try {
-        // Query to fetch appointments for the logged-in doctor
-        const q = query(collection(db, 'Appointments'), where('doctor Id', '==', doctorId));
+        // Correct the field name to match Firestore's naming convention
+        const q = query(collection(db, 'Appointments'), where('doctorId', '==', doctorId));
         
         // Set up a listener to update appointment counts in real-time
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
