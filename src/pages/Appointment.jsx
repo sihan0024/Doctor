@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase-config';
-import './PatientAppointment.css';
+import './Appointment.css';
 
 const Appointment = () => {
   const location = useLocation();
@@ -24,7 +24,7 @@ const Appointment = () => {
       try {
         const q = query(
           collection(db, 'Appointments'),
-          where('doctor Id', '==', doctorId)
+          where('doctorId', '==', doctorId)
         );
 
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -49,6 +49,28 @@ const Appointment = () => {
 
   const handlePatientClick = (patientId) => {
     navigate(`/info`, { state: { patientId } });
+  };
+
+  const handleViewMedicalHistory = (appointment) => {
+    if (appointment.nic) {
+      navigate(`/MedicalHistory`, { state: { nicNo: appointment.nic } });
+    } else {
+      console.error('NIC number is not available for this appointment.');
+    }
+  };
+  
+  
+
+  const handleSendPrescription = (appointment) => {
+    // Send full patient details when navigating to prescription page
+    navigate(`/prescription`, { 
+      state: { 
+        appointmentId: appointment.id, 
+        patientName: appointment.patientName, 
+        appointmentNo: appointment.appointmentNumber,
+        nicNo: appointment.nic // Pass NIC number to the prescription page
+      }
+    });
   };
 
   return (
@@ -79,19 +101,20 @@ const Appointment = () => {
               <tr>
                 <th>Appointment No</th>
                 <th>Patient Name</th>
-                <th>Blood Group</th>
+                <th>NIC</th>
                 <th>Phone Number</th>
-                <th>Action</th>
+                <th>Medical History</th>
+                <th>Prescription</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="5">Loading...</td>
+                  <td colSpan="6">Loading...</td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan="5" className="error">
+                  <td colSpan="6" className="error">
                     {error}
                   </td>
                 </tr>
@@ -102,10 +125,15 @@ const Appointment = () => {
                     <td onClick={() => handlePatientClick(appointment.id)} className="patient-name">
                       {appointment.patientName}
                     </td>
-                    <td>{appointment.bloodGroup}</td>
-                    <td>{appointment.contactNo}</td>
+                    <td>{appointment.nic}</td>
+                    <td>{appointment.phone}</td>
                     <td>
-                      <button className="send-prescription-btn">
+                      <button className="view-btn" onClick={() => handleViewMedicalHistory(appointment)}>
+                        View
+                      </button>
+                    </td>
+                    <td>
+                      <button className="send-prescription-btn" onClick={() => handleSendPrescription(appointment)}>
                         Send Prescription
                       </button>
                     </td>
@@ -113,7 +141,7 @@ const Appointment = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5">No appointments available.</td>
+                  <td colSpan="6">No appointments available.</td>
                 </tr>
               )}
             </tbody>

@@ -51,7 +51,7 @@ const SideBar = () => {
   };
 
   const handleNavigateToAppointment = () => {
-    navigate('/medicine', { state: { doctorId } });
+    navigate('/Appointment', { state: { doctorId } });
   };
 
   const handleNavigateToAddPrescription = () => {
@@ -103,14 +103,14 @@ const SideBar = () => {
         <li>
           <div
             onClick={handleNavigateToAppointment}
-            className={location.pathname === '/medicine' ? 'active' : ''}
+            className={location.pathname === '/Appointment' ? 'active' : ''}
             style={{ cursor: 'pointer' }}
           >
             <FaPills className="icon" /> Appointment
           </div>
         </li>
         <li>
-          <Link to="/patient-appointment" className={location.pathname === '/patient-appointment' ? 'active' : ''}>
+          <Link to="/MedicalHistory" className={location.pathname === '/MedicalHistory' ? 'active' : ''}>
             <FaCalendarCheck className="icon" /> Medical History
           </Link>
         </li>

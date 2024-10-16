@@ -2,24 +2,15 @@ import React from 'react';
 import { Navigate, Route, BrowserRouter as Router, Routes, useLocation } from 'react-router-dom';
 import SideBar from './components/SideBar';
 import TopBar from './components/TopBar';
-import AddNewPatient from './pages/AddNewPatient';
-import AddSchedule from './pages/AddSchedule';
 import Dashboard from './pages/Dashboard';
-import DoctorDetails from './pages/DoctorDetails'; // Import DoctorDetails component
-import Doctors from './pages/Doctors';
 import DoctorSchedule from './pages/DoctorSchedule';
 import Login from './pages/login';
-import Logout from './pages/logout';
-import Medicine from './pages/Medicine';
-import NewDoctor from './pages/NewDoctor';
-import PatientAppointment from './pages/PatientAppointment';
-import Patients from './pages/Patients';
+import Appointment from './pages/Appointment';
+import PatientMedicalHistory from './pages/PatientMedicalHistory';
 import Prescription from './pages/Prescription';
-import Signup from './pages/Signup';
-import AddMedicine from './pages/AddMedicine'; // Import AddMedicine component
 import Patientinfo from './pages/info';
 import PrescriptionSummary from './pages/Summary';
-
+import PrescriptionDisplay from './pages/PrescriptionDisplay';
 function AppContent() {
     const location = useLocation();
     const isLoginPage = location.pathname === '/login' || location.pathname === '/signup';
@@ -32,23 +23,16 @@ function AppContent() {
                 <div style={{ marginTop: !isLoginPage ? '60px' : '0' }}>
                     <Routes>
                         <Route path="/login" element={<Login />} />
-                        <Route path="/signup" element={<Signup />} />
                         <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/doctors" element={<Doctors />} />
-                        <Route path="/new-doctor" element={<NewDoctor />} />
-                        <Route path="/doctor/:doctorId" element={<DoctorDetails />} /> {/* Route for DoctorDetails */}
-                        <Route path="/patients" element={<Patients />} />
-                        <Route path="/addnewpatient" element={<AddNewPatient />} />
-                        <Route path="/medicine" element={<Medicine />} />
-                        <Route path="/add-medicine" element={<AddMedicine />} /> {/* Route for AddMedicine */}
-                        <Route path="/patient-appointment" element={<PatientAppointment />} />
+                       
+                        <Route path="/Appointment" element={<Appointment />} />
+                        <Route path="/MedicalHistory" element={<PatientMedicalHistory />} />
                         <Route path="/doctor-schedule" element={<DoctorSchedule />} />
-                        <Route path="/add-schedule" element={<AddSchedule />} />
                         <Route path="/prescription" element={<Prescription />} />
-                        <Route path="/logout" element={<Logout />} />
                         <Route path="/" element={<Navigate to="/login" />} />
                         <Route path="/info" element={<Patientinfo />} />
                         <Route path="/summary" element={<PrescriptionSummary />} />
+                        <Route path="/in" element={<PrescriptionDisplay />} />
 
                     </Routes>
                 </div>

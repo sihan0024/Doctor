@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import './Summary.css';
-import { db } from '../firebase-config'; // Adjust the path if necessary
-import { collection, addDoc, doc, getDoc, updateDoc } from 'firebase/firestore'; // Import updateDoc
-import { useLocation } from 'react-router-dom'; // Import useLocation
-import CryptoJS from 'crypto-js'; // Import CryptoJS for encryption  
+import { db } from '../firebase-config';
+import { collection, doc, getDoc, setDoc, getDocs } from 'firebase/firestore'; 
+import { useLocation } from 'react-router-dom';
+import html2canvas from 'html2canvas';
+import CryptoJS from 'crypto-js';
+import { getStorage, ref, uploadString } from 'firebase/storage';
 
 const Summary = () => {
-  const location = useLocation(); // Get location object
-  const summaryData = location.state || {}; // Get passed data or set as an empty object
-  const [doctorDetails, setDoctorDetails] = useState(null); // State to hold doctor details
-  const [loading, setLoading] = useState(true); // Loading state
-  const [error, setError] = useState(null); // Error state
-
-  const doctorId = location.state?.doctorId || localStorage.getItem('doctorId'); // Get doctorId from state or localStorage
+  const location = useLocation();
+  const summaryData = location.state || {};
+  const [doctorDetails, setDoctorDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const doctorId = location.state?.doctorId || localStorage.getItem('doctorId');
 
   useEffect(() => {
     if (!doctorId) {
@@ -27,8 +28,8 @@ const Summary = () => {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          setDoctorDetails(docSnap.data()); // Set doctor details
-          localStorage.setItem('doctorId', doctorId); // Store doctorId in localStorage
+          setDoctorDetails(docSnap.data());
+          localStorage.setItem('doctorId', doctorId);
         } else {
           setError('No matching doctor found.');
         }
@@ -44,46 +45,98 @@ const Summary = () => {
   }, [doctorId]);
 
   const handleBack = () => {
-    // Logic for navigating back
+    // Logic for navigating back (implement according to your routing logic)
     console.log('Back button clicked');
   };
 
   const handleSend = async () => {
-    // Logic for sending the summary to Firestore
-    try {
-      // Encrypt the summary data
-      const encryptedSummary = {
-        doctor: {
-          doctorName: CryptoJS.AES.encrypt(doctorDetails.doctorName, 'secret-key').toString(),
-          biography: CryptoJS.AES.encrypt(doctorDetails.biography, 'secret-key').toString(),
-          phoneNumber: CryptoJS.AES.encrypt(doctorDetails.phoneNumber, 'secret-key').toString(),
-        },
-        patient: CryptoJS.AES.encrypt(summaryData.patient, 'secret-key').toString(),
-        referenceNo: '', // This will be filled with the document ID later
-        prescriptionDate: CryptoJS.AES.encrypt(summaryData.prescriptionDate, 'secret-key').toString(),
-        diagnosis: CryptoJS.AES.encrypt(summaryData.diagnosis, 'secret-key').toString(),
-        note: CryptoJS.AES.encrypt(summaryData.note, 'secret-key').toString(),
-        medicines: summaryData.medicines.map(med => ({
-          medicineName: CryptoJS.AES.encrypt(med.medicineName, 'secret-key').toString(),
-          instruction: CryptoJS.AES.encrypt(med.instruction, 'secret-key').toString(),
-          days: CryptoJS.AES.encrypt(med.days, 'secret-key').toString(),
-        })),
-      };
+    if (!process.env.REACT_APP_SECRET_KEY) {
+      console.error("REACT_APP_SECRET_KEY is not defined");
+      return;
+    }
 
-      // Add the encrypted data to Firestore
-      const docRef = await addDoc(collection(db, "prescriptions"), encryptedSummary);
-      console.log("Document written with ID: ", docRef.id);
+    // Capture the summary container as an image
+    const summaryContainer = document.querySelector('.summary-container');
+    const canvas = await html2canvas(summaryContainer);
+    const imgData = canvas.toDataURL('image/png');
+
+    // Check if imgData is in the correct format
+    if (!imgData.startsWith('data:image/png;base64,' )) {
+      console.error("Image data URL is not properly formatted");
+      alert('Failed to capture image. Please try again.');
+      return;
+    }
+
+    // Encrypt the image data
+    const encryptedImgData = CryptoJS.AES.encrypt(imgData, process.env.REACT_APP_SECRET_KEY).toString();
+
+    // Encrypt the summary data
+    const summaryToSend = {
+      doctor: {
+        doctorName: CryptoJS.AES.encrypt(doctorDetails.doctorName, process.env.REACT_APP_SECRET_KEY).toString(),
+        biography: CryptoJS.AES.encrypt(doctorDetails.biography, process.env.REACT_APP_SECRET_KEY).toString(),
+        phoneNumber: CryptoJS.AES.encrypt(doctorDetails.phoneNumber, process.env.REACT_APP_SECRET_KEY).toString(),
+      },
+      patient: CryptoJS.AES.encrypt(summaryData.patient, process.env.REACT_APP_SECRET_KEY).toString(),
+      prescriptionDate: CryptoJS.AES.encrypt(summaryData.prescriptionDate, process.env.REACT_APP_SECRET_KEY).toString(),
+      diagnosis: CryptoJS.AES.encrypt(summaryData.diagnosis, process.env.REACT_APP_SECRET_KEY).toString(),
+      note: CryptoJS.AES.encrypt(summaryData.note, process.env.REACT_APP_SECRET_KEY).toString(),
+      appointmentNo: CryptoJS.AES.encrypt(summaryData.appointmentNo, process.env.REACT_APP_SECRET_KEY).toString(),
+      nicNo: CryptoJS.AES.encrypt(summaryData.nicNo, process.env.REACT_APP_SECRET_KEY).toString(),
+      medicines: summaryData.medicines.map(med => ({
+        medicineName: CryptoJS.AES.encrypt(med.medicineName, process.env.REACT_APP_SECRET_KEY).toString(),
+        instruction: CryptoJS.AES.encrypt(med.instruction, process.env.REACT_APP_SECRET_KEY).toString(),
+        days: CryptoJS.AES.encrypt(med.days.toString(), process.env.REACT_APP_SECRET_KEY).toString(),
+      })),
+      encryptedImage: encryptedImgData, // Add encrypted image data
+      createdDate: new Date().toISOString() // Add created date
+    };
+
+    console.log("Summary to send:", summaryToSend); // Log the summary
+
+    try {
+      // Generate a unique prescription ID
+      const prescriptionId = `PID${(await getPrescriptionCount()) + 1}`; // Auto-incrementing ID
+      console.log("Generated Prescription ID:", prescriptionId); // Log the generated ID
+
+      // Upload encrypted image to Firebase Storage
+      const storage = getStorage();
+      const imageRef = ref(storage, `prescriptions/${prescriptionId}.png`);
       
-      // Update the document with the reference number
-      await updateDoc(docRef, {
-        referenceNo: docRef.id
-      });
-      
+      // Ensure we upload the encrypted image directly as a base64 string
+      await uploadString(imageRef, encryptedImgData, 'base64'); // Correctly specify base64 format
+      console.log("Image uploaded to Firebase Storage");
+
+      // Set the summary data to Firestore with the custom document ID
+      await setDoc(doc(db, "prescriptions", prescriptionId), summaryToSend);
+      console.log("Document written with ID: ", prescriptionId);
+
       // Optionally, show feedback to the user here (e.g., alert, toast)
-      alert('Prescription sent successfully! Reference No: ' + docRef.id);
+      alert('Prescription sent successfully! Reference No: ' + prescriptionId);
     } catch (e) {
       console.error("Error adding document: ", e);
       alert('Error sending prescription: ' + e.message);
+    }
+  };
+
+  // Function to count existing prescriptions
+  const getPrescriptionCount = async () => {
+    try {
+      const prescriptionCollection = collection(db, "prescriptions");
+      const prescriptionDocs = await getDocs(prescriptionCollection);
+      let maxId = 0;
+
+      prescriptionDocs.forEach(doc => {
+        const id = parseInt(doc.id.replace('PID', ''));
+        if (id > maxId) {
+          maxId = id;
+        }
+      });
+      console.log("Maximum Prescription ID:", maxId); // Log the maximum ID found
+      return maxId; // Return the maximum ID found
+    } catch (error) {
+      console.error("Error fetching prescription count: ", error.message);
+      return 0; // Fallback to zero if there's an error
     }
   };
 
@@ -91,7 +144,6 @@ const Summary = () => {
     <div className="summary-container">
       <div className="patient-details">
         <div className="left-section">
-          {/* Handle loading, error, and fetched doctor details */}
           {loading ? (
             <p>Loading doctor details...</p>
           ) : error ? (
@@ -106,7 +158,8 @@ const Summary = () => {
         </div>
         <div className="right-section">
           <p><strong>Patient Name:</strong> {summaryData.patient}</p>
-          <p><strong>Reference No:</strong> {summaryData.referenceNo}</p>
+          <p><strong>Appointment No:</strong> {summaryData.appointmentNo}</p>
+          <p><strong>NIC No:</strong> {summaryData.nicNo}</p>
           <p><strong>Prescription Date:</strong> {summaryData.prescriptionDate}</p>
           <p><strong>Diagnosis:</strong> {summaryData.diagnosis}</p>
           <p><strong>Note:</strong> {summaryData.note}</p>

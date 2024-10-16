@@ -13,19 +13,19 @@ body {
   background-position: center;
   height: 100vh;
   color: black;
-  margin-left: -35px;
-  width: 96%; /* Make it 100% of the viewport width */
+  margin: 0; /* Center the content */
+  width: 100%; /* Make it 100% of the viewport width */
 }
 
 .header {
-  width: 1350px; /* Full width of the viewport */
+  width: 100%; /* Full width of the viewport */
   background-color: #18334E;
   display: flex;
   align-items: center;
+  justify-content: space-between; /* Align content evenly */
   padding: 10px 20px;
   box-sizing: border-box;
   height: 70px;
-  margin-left: 00px;
 }
 
 .logo {
@@ -54,14 +54,13 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(255, 255, 255, 0.85); /* Increase opacity */
   padding: 40px 30px;
   border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-  max-width: 100%; /* Ensure it doesn't exceed the viewport width */
-  width: 100%; /* Adjust width to fit inside the parent */
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); /* Slightly darker shadow */
+  width: 90%; /* Allow better scaling on smaller screens */
   max-width: 400px; /* Keep form compact */
-  margin-right: 50px;
+  margin: 20px; /* Center within the container */
 }
 
 .login-header {
